@@ -10,14 +10,15 @@
 namespace AVL {
     struct Node final {
         char key_ {};
-        int height_ = 0;
+        int height_ = 1;
         int balanceFactor_ = 0;
+        int id_ = -1;
         Node* left_ = nullptr;
         Node* right_ = nullptr;
 
         Node (char key):
             key_ (key),
-            height_ (0),
+            height_ (1),
             balanceFactor_ (0),
             left_ (nullptr),
             right_ (nullptr)
@@ -43,7 +44,10 @@ namespace AVL {
             //  INSERTION
             Node* InsertRecursive (char key, Node* node) {
                 if (!node) {
-                    return new Node (key);
+                    node = new Node (key);
+                    node->id_ = nodes_.size ();
+                    nodes_.push_back (node);
+                    return node;
                 }
                 if (key < node->key_) {
                     node->left_ = InsertRecursive (key, node->left_);
@@ -55,18 +59,17 @@ namespace AVL {
             }
 
             //  DOT IMAGE
-            void MakeDotRecursive (std::ostream* outfile, Node* node) {
-                if (!node) { return ; }
-                if (node->left_) {
-                    *outfile << node << "[label = \"" << node->key_ << "\"]" << std::endl;
-                    *outfile << node->left_ << "[label = \"" << node->left_->key_ << "\"]" << std::endl;
-                    *outfile << node << " -> " << node->left_ << std::endl;
+            void MakeDotRecursive (std::ofstream* outfile, Node* node) {
+                if (!node) { return; }
+                *outfile << node->id_ << "[label = \"" << node->key_ << "\"]" << std::endl;
+                if (node->left_) {                    
+                    *outfile << node->left_->id_ << "[label = \"" << node->left_->key_ << "\"]" << std::endl;
+                    *outfile << node->id_ << " -> " << node->left_->id_ << std::endl;
                     MakeDotRecursive (outfile, node->left_);
                 }
                 if (node->right_) {
-                    *outfile << node << "[label = \"" << node->key_ << "\"]" << std::endl;
-                    *outfile << node->right_ << "[label = \"" << node->right_->key_ << "\"]" << std::endl;
-                    *outfile << node << " -> " << node->right_ << std::endl;
+                    *outfile << node->right_->id_ << "[label = \"" << node->right_->key_ << "\"]" << std::endl;
+                    *outfile << node->id_ << " -> " << node->right_->id_ << std::endl;
                     MakeDotRecursive (outfile, node->right_);
                 }
             }
@@ -101,7 +104,8 @@ namespace AVL {
 
             //  INSERTION AND DELETION
             Node* Insert (char key) {
-                return InsertRecursive (key, head_);
+                head_ = InsertRecursive (key, head_);
+                return head_;
             }
             void Delete (Iterator nodeIt) {
 
@@ -109,17 +113,17 @@ namespace AVL {
 
             //  ROTATIONS
             Node* RotateLeft (Node* node) {
-                Node* temp = node->left_;
-                node->left_ = temp->right_;
-                temp->right_ = node;
+                Node* temp = node->right_;
+                node->right_ = temp->left_;
+                temp->left_ = node;
                 node->Update ();
                 temp->Update ();
                 return temp;
             }
             Node* RotateRight (Node* node) {
-                Node* temp = node->right_;
-                node->right_ = temp->left_;
-                temp->left_ = node;
+                Node* temp = node->left_;
+                node->left_ = temp->right_;
+                temp->right_ = node;
                 node->Update ();
                 temp->Update ();
                 return temp;
@@ -144,8 +148,10 @@ namespace AVL {
             }
 
             //  DOT IMAGE
-            void MakeDot (std::ostream* outfile) {
+            void MakeDot (std::ofstream* outfile) {
+                *outfile << "digraph G {" << std::endl << "fontsize = 50" << std::endl;
                 MakeDotRecursive (outfile, head_);
+                *outfile << "}";
             }
     };
 }

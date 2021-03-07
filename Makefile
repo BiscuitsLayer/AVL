@@ -4,6 +4,6 @@ all:	b r image
 b:
 		g++ main.cpp -ggdb3 -o main
 r:
-		./main $(CURDIR)
+		./main
 image:
-		system ("dot -Tpng /home/biscuitslayer/CLionProjects/8_Differentiator/temp.dot -o/home/biscuitslayer/CLionProjects/8_Differentiator/temp.png");
+		dot -Tpng $(CURDIR)/Images/Tree.dot -o $(CURDIR)/Images/Tree.png
