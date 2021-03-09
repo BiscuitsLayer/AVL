@@ -11,6 +11,21 @@ void MakeDot (AVL::Tree tree) {
 	tree.MakeDot (&treeDot);
 }
 
+AVL::Tree AddedX (AVL::Tree tree) {
+	tree.Insert ('x');
+	return tree;
+}
+
+void CtorsTest () {
+	AVL::Tree tree1 {};
+	tree1.Insert ('x');
+	tree1.Insert ('z');
+	tree1.Insert ('y');
+	AVL::Tree tree2 {};
+	tree2 = tree1;
+	tree2 = AddedX (tree1);
+}
+
 int main () {
 	AVL::Tree tree {};
 
@@ -24,7 +39,7 @@ int main () {
 	if (!treeDot.is_open ()) {
 		std::cerr << "Error opening dot file!" << std::endl;
 	}
-	tree.MakeDot (&treeDot);
-	//MakeDot (temp);
+	
+	CtorsTest ();
 	return 0;
 }

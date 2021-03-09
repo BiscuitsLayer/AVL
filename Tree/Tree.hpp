@@ -9,28 +9,39 @@
 
 namespace AVL {
     struct Node final {
-        char key_ {};
-        int height_ = 1;
-        int balanceFactor_ = 0;
-        int id_ = -1;
-        Node* left_ = nullptr;
-        Node* right_ = nullptr;
+        public:
+            //  DATA
+            char key_ {};
+            int height_ = 1;
+            int balanceFactor_ = 0;
+            int id_ = -1;
+            Node* left_ = nullptr;
+            Node* right_ = nullptr;
 
-        Node (char key):
-            key_ (key),
-            height_ (1),
-            balanceFactor_ (0),
-            id_ (-1),
-            left_ (nullptr),
-            right_ (nullptr)
-            {}
+            //  CTOR
+            Node (char key):
+                key_ (key),
+                height_ (1),
+                balanceFactor_ (0),
+                id_ (-1),
+                left_ (nullptr),
+                right_ (nullptr)
+                {}
 
-        void Update () {
-            int leftHeight = (left_ ? left_->height_ : 0);
-            int rightHeight = (right_ ? right_->height_ : 0);
-            balanceFactor_ = rightHeight - leftHeight;
-            height_ = std::max (leftHeight, rightHeight) + 1;
-        }
+            //  COPY
+            Node (const Node& rhs) = delete;
+            Node& operator = (Node& rhs) = delete;
+
+            //  MOVE
+            Node (const Node&& rhs) = delete;
+            Node& operator = (Node&& rhs) = delete;
+
+            void Update () {
+                int leftHeight = (left_ ? left_->height_ : 0);
+                int rightHeight = (right_ ? right_->height_ : 0);
+                balanceFactor_ = rightHeight - leftHeight;
+                height_ = std::max (leftHeight, rightHeight) + 1;
+            }
     }; 
 
     class Tree final {
@@ -38,9 +49,10 @@ namespace AVL {
             std::vector <Node*> nodes_ {};
             Node* head_ = nullptr;
             
-            //  SWAP
-            void Swap (Tree& rhs) {
-                this->nodes_ = rhs.nodes_;
+            //  SHALLOW SWAP
+            void ShallowSwap (Tree& rhs) {
+                std::swap (this->head_, rhs.head_);
+                std::swap (this->nodes_, rhs.nodes_);
             }
 
             //  INSERTION
@@ -139,31 +151,54 @@ namespace AVL {
                     }
                 }
 
+            //  DTOR
+            ~Tree () {
+                for (auto&& node : nodes_) {
+                    delete node;
+                }
+            }
+
             //  COPY
             Tree (const Tree& rhs):
-                nodes_ (rhs.nodes_),
-                head_ (nodes_[rhs.head_->id_])
+                nodes_ (rhs.nodes_.size ()),
+                head_ (nullptr)
                 {
                     std::cerr << "Copy ctor" << std::endl;
+                    for (int i = 0; i < rhs.nodes_.size (); ++i) {
+                        nodes_[i] = new Node { rhs.nodes_[i]->key_ };
+                        nodes_[i]->id_ = i;
+                    }
+                    head_ = nodes_[rhs.head_->id_];
                     for (auto&& node : nodes_) {
-                        if (node->left_) {
+                        if (nodes_[node->id_]->left_) {
                             node->left_ = nodes_[node->left_->id_];
                         }
-                        if (node->right_) {
+                        if (nodes_[node->id_]->right_) {
                             node->right_ = nodes_[node->right_->id_];
                         }
                     }
                 }
             Tree& operator = (Tree& rhs) {
                 std::cerr << "Copy assign" << std::endl;
-                Tree temp { rhs };
-                Swap (rhs);
+                if (this != &rhs) {
+                    Tree temp { rhs };
+                    ShallowSwap (temp);
+                }
                 return *this;
             }
 
             //  MOVE
-            Tree (Tree&& rhs) = delete;
-            Tree& operator = (Tree&& rhs) = delete;
+            Tree (Tree&& rhs) noexcept {
+                std::cerr << "Move ctor" << std::endl;
+                ShallowSwap (rhs);
+            }
+            Tree& operator = (Tree&& rhs) {
+                std::cerr << "Move assign" << std::endl;
+                if (this != &rhs) {
+                    ShallowSwap (rhs);
+                }
+                return *this;
+            }
 
             //  MODIFIERS
             void Clear () { nodes_.clear (); }
