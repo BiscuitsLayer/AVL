@@ -9,7 +9,6 @@
 
 namespace AVL {
     struct Node final {
-        Node* parent_ = nullptr;
         char key_ {};
         int height_ = 1;
         int balanceFactor_ = 0;
@@ -18,7 +17,6 @@ namespace AVL {
         Node* right_ = nullptr;
 
         Node (char key):
-            parent_ (nullptr),
             key_ (key),
             height_ (1),
             balanceFactor_ (0),
@@ -37,16 +35,8 @@ namespace AVL {
 
     class Tree final {
         private:
-            Node* Head () {
-                if (nodes_.empty ()) {
-                    return nullptr;
-                }
-                Node* ans = &nodes_[0];
-                while (ans->parent_) {
-                    ans = ans->parent_;
-                }
-            }
-            std::vector <Node> nodes_ {};
+            std::vector <Node*> nodes_ {};
+            Node* head_ = nullptr;
             
             //  SWAP
             void Swap (Tree& rhs) {
@@ -56,18 +46,16 @@ namespace AVL {
             //  INSERTION
             Node* InsertRecursive (char key, Node* node) {
                 if (!node) {
-                    nodes_.push_back ({ key });
-                    nodes_.back ().id_ = nodes_.size () - 1;
-                    node = &nodes_.back ();    
+                    node = new Node { key };
+                    node->id_ = nodes_.size ();
+                    nodes_.push_back (node);
                     return node;
                 }
                 if (key < node->key_) {
                     node->left_ = InsertRecursive (key, node->left_);
-                    node->left_->parent_ = node;
                 }
                 else {
                     node->right_ = InsertRecursive (key, node->right_);
-                    node->right_->parent_ = node;
                 }
                 return Balance (node);
             }
@@ -75,25 +63,22 @@ namespace AVL {
             //  ROTATIONS
             Node* RotateLeft (Node* node) {
                 Node* temp = node->right_;
-                temp->parent_ = node->parent_;
-                node->parent_ = temp;
-                
                 node->right_ = temp->left_;
-                temp->left_->parent_ = node;
                 temp->left_ = node;
-                
+                if (node == head_) {
+                    head_ = temp;
+                }
                 node->Update ();
                 temp->Update ();
                 return temp;
             }
             Node* RotateRight (Node* node) {
                 Node* temp = node->left_;
-                temp->parent_ = node->parent_;
-                node->parent_ = temp;
-
                 node->left_ = temp->right_;
-                temp->right_->parent_ = node;
                 temp->right_ = node;
+                if (node == head_) {
+                    head_ = temp;
+                }
                 node->Update ();
                 temp->Update ();
                 return temp;
@@ -120,7 +105,6 @@ namespace AVL {
             //  DOT IMAGE
             void MakeDotRecursive (std::ofstream* outfile, Node* node) {
                 if (!node) { return; }
-                *outfile << node->id_ << "[label = \"" << node->key_ << "\"]" << std::endl;
                 if (node->left_) {                    
                     *outfile << node->left_->id_ << "[label = \"" << node->left_->key_ << "\"]" << std::endl;
                     *outfile << node->id_ << " -> " << node->left_->id_ << std::endl;
@@ -143,10 +127,12 @@ namespace AVL {
 
             //  CTORS
             Tree ():
-                nodes_ ({})
+                nodes_ ({}),
+                head_ (nullptr)
                 {}  
             Tree (std::vector <char>& data):
-                nodes_ ({})
+                nodes_ ({}),
+                head_ (nullptr)
                 {
                     for (auto&& item : data) {
                         Insert (item);
@@ -155,15 +141,16 @@ namespace AVL {
 
             //  COPY
             Tree (const Tree& rhs):
-                nodes_ (rhs.nodes_)
+                nodes_ (rhs.nodes_),
+                head_ (nodes_[rhs.head_->id_])
                 {
                     std::cerr << "Copy ctor" << std::endl;
                     for (auto&& node : nodes_) {
-                        if (node.left_) {
-                            node.left_ = &nodes_[node.left_->id_];
+                        if (node->left_) {
+                            node->left_ = nodes_[node->left_->id_];
                         }
-                        if (node.right_) {
-                            node.right_ = &nodes_[node.right_->id_];
+                        if (node->right_) {
+                            node->right_ = nodes_[node->right_->id_];
                         }
                     }
                 }
@@ -181,7 +168,10 @@ namespace AVL {
             //  MODIFIERS
             void Clear () { nodes_.clear (); }
             Node* Insert (char key) {
-                Node* result = InsertRecursive (key, Head ());
+                Node* result = InsertRecursive (key, head_);
+                if (nodes_.size () == 1) {
+                    head_ = result;
+                }
                 return result;
             }
             void Extract (char key) {
@@ -200,9 +190,11 @@ namespace AVL {
             //  DOT IMAGE
             void MakeDot (std::ofstream* outfile) {
                 *outfile << "digraph G {" << std::endl << "fontsize = 50" << std::endl;
-                MakeDotRecursive (outfile, Head ());
+                if (head_) {
+                    *outfile << head_->id_ << "[label = \"" << head_->key_ << "\"]" << std::endl;
+                    MakeDotRecursive (outfile, head_);
+                }
                 *outfile << "}";
             }
     };
 }
-
