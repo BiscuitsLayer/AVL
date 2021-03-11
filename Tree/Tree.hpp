@@ -3,125 +3,18 @@
 #include <iostream>
 #include <vector>
 
-#include "../Settings/Settings.hpp"
-
 namespace AVL {
-    struct Node final {
-        public:
-            //  DATA
-            char key_ {};
-            int height_ = 1;
-            int balanceFactor_ = 0;
-            int id_ = -1;
-            Node* left_ = nullptr;
-            Node* right_ = nullptr;
-
-            //  CTOR
-            Node (char key):
-                key_ (key),
-                height_ (1),
-                balanceFactor_ (0),
-                id_ (-1),
-                left_ (nullptr),
-                right_ (nullptr)
-                {}
-
-            //  COPY
-            Node (const Node& rhs) = delete;
-            Node& operator = (Node& rhs) = delete;
-
-            //  MOVE
-            Node (const Node&& rhs) = delete;
-            Node& operator = (Node&& rhs) = delete;
-
-            //  SERVICE
-            void Update () {
-                int leftHeight = (left_ ? left_->height_ : 0);
-                int rightHeight = (right_ ? right_->height_ : 0);
-                balanceFactor_ = rightHeight - leftHeight;
-                height_ = std::max (leftHeight, rightHeight) + 1;
-            }
-    }; 
-
+    template <typename T>
     class Tree final {
         public:
-            class Iterator final {
-                private:
-                    //  DATA
-                    Node* node_ = nullptr;
-                    Tree* tree_ = nullptr;
-                    
-                    //  SERVICE CTOR
-                    Iterator (Tree* tree, Node* node):
-                        tree_ (tree),
-                        node_ (node)
-                        {}
-                    friend Iterator MakeIterator (Tree* tree, Node* node);
-                    
-                public:
-                    //  CTOR
-                    Iterator ():
-                        node_ (nullptr),
-                        tree_ (nullptr)
-                        {}
-
-                    //  CAST OPERATOR
-                    explicit operator Node* () { return node_; }
-
-                    //  OPERATORS
-                    const char operator * () const { return node_->key_; }
-                    template <typename T>
-                    const T* operator -> () const { return node_; }
-                    Iterator operator ++ () {
-                        Node* cur = tree_->head_;
-                        Node* ans = nullptr;
-                        while (cur) {
-                            if (cur->key_ > node_->key_) {
-                                ans = cur;
-                                cur = cur->left_;
-                            }
-                            else {
-                                cur = cur->right_;
-                            }
-                        }
-                        node_ = ans;
-                        return { tree_, ans };
-                    }
-                    Iterator operator ++ (int) {
-                        Iterator ans = *this;
-                        ++(*this);
-                        return ans;
-                    }
-                    Iterator operator -- () {
-                        Node* cur = tree_->head_;
-                        Node* ans = nullptr;
-                        while (cur) {
-                            if (cur->key_ > node_->key_) {
-                                cur = cur->left_;
-                            }
-                            else {
-                                ans = cur;
-                                cur = cur->right_;
-                            }
-                        }
-                        node_ = ans;
-                        return { tree_, ans };
-                    }
-                    Iterator operator -- (int) {
-                        Iterator ans = *this;
-                        --(*this);
-                        return ans;
-                    }
-                    bool operator == (const Iterator& rhs) { return node_ == rhs.node_; }
-                    bool operator != (const Iterator& rhs) { return !(*this == rhs); }
-            };
+            class Iterator;
 
             //  CTORS
             Tree ():
                 nodes_ ({}),
                 head_ (nullptr)
                 {}  
-            Tree (std::vector <char>& data):
+            Tree (std::vector <T>& data):
                 nodes_ ({}),
                 head_ (nullptr)
                 {
@@ -142,7 +35,6 @@ namespace AVL {
                 nodes_ (rhs.nodes_.size ()),
                 head_ (nullptr)
                 {
-                    std::cerr << "Copy ctor" << std::endl;
                     for (int i = 0; i < rhs.nodes_.size (); ++i) {
                         nodes_[i] = new Node { rhs.nodes_[i]->key_ };
                         nodes_[i]->id_ = i;
@@ -158,7 +50,6 @@ namespace AVL {
                     }
                 }
             Tree& operator = (Tree& rhs) {
-                std::cerr << "Copy assign" << std::endl;
                 if (this != &rhs) {
                     Tree temp { rhs };
                     ShallowSwap (temp);
@@ -168,11 +59,9 @@ namespace AVL {
 
             //  MOVE
             Tree (Tree&& rhs) noexcept {
-                std::cerr << "Move ctor" << std::endl;
                 ShallowSwap (rhs);
             }
             Tree& operator = (Tree&& rhs) {
-                std::cerr << "Move assign" << std::endl;
                 if (this != &rhs) {
                     ShallowSwap (rhs);
                 }
@@ -187,14 +76,14 @@ namespace AVL {
                 }
                 nodes_.clear ();
             }
-            Iterator Insert (const char& key) {
+            Iterator Insert (const T& key) {
                 Node* result = InsertRecursive (key, head_);
                 if (nodes_.size () == 1) {
                     head_ = result;
                 }
                 return MakeIterator (this, result);
             }
-            void Extract (const char& key) {
+            void Extract (const T& key) {
                 Node* result = ExtractRecursive (key, head_);
                 if (!head_) {
                     head_ = result;
@@ -220,13 +109,39 @@ namespace AVL {
             Iterator end () {
                 return MakeIterator (this, nullptr);
             }
+            Iterator LowerBound (const T& key) {
+                Node* cur = head_;
+                Node* prev = nullptr;
+                while (cur) {
+                    if (key < cur->key_) {
+                        prev = cur;
+                        cur = cur->left_;
+                    }
+                    else if (key > cur->key_) {
+                        prev = cur;
+                        cur = cur->right_;
+                    }
+                    else { // key == cur->key_
+                        return MakeIterator (this, cur);
+                    }
+                }
+                Iterator ans = MakeIterator (this, prev);
+                return (prev->key_ > key ? ans : ++ans);
+            }
+            Iterator UpperBound (const T& key) {
+                Iterator ans = LowerBound (key);
+                if (ans && *ans == key) {
+                    ++ans;
+                }
+                return ans;
+            }
 
             //  CAPACITY
             size_t Size () { return nodes_.size (); }
             bool Empty () { return nodes_.empty (); }
 
             //  LOOKUP
-            Iterator Find (const char& key) {
+            Iterator Find (const T& key) {
                 Node* cur = head_;
                 while (cur) {
                     if (key < cur->key_) {
@@ -252,12 +167,49 @@ namespace AVL {
                 *outfile << "}";
             }
         private:
+            struct Node final {
+                public:
+                    //  DATA
+                    T key_ {};
+                    int height_ = 1;
+                    int balanceFactor_ = 0;
+                    int id_ = -1;
+                    Node* left_ = nullptr;
+                    Node* right_ = nullptr;
+
+                    //  CTOR
+                    Node (T key):
+                        key_ (key),
+                        height_ (1),
+                        balanceFactor_ (0),
+                        id_ (-1),
+                        left_ (nullptr),
+                        right_ (nullptr)
+                        {}
+
+                    //  COPY
+                    Node (const Node& rhs) = delete;
+                    Node& operator = (Node& rhs) = delete;
+
+                    //  MOVE
+                    Node (const Node&& rhs) = delete;
+                    Node& operator = (Node&& rhs) = delete;
+
+                    //  SERVICE
+                    void Update () {
+                        int leftHeight = (left_ ? left_->height_ : 0);
+                        int rightHeight = (right_ ? right_->height_ : 0);
+                        balanceFactor_ = rightHeight - leftHeight;
+                        height_ = std::max (leftHeight, rightHeight) + 1;
+                    }
+            }; 
             //  DATA
             std::vector <Node*> nodes_ {};
             Node* head_ = nullptr;
 
             //  ITERATOR
-            friend Iterator MakeIterator (Tree* tree, Node* node) {
+            template <typename U>
+            friend typename Tree <U>::Iterator MakeIterator (Tree <U>* tree, typename Tree <U>::Node* node) {
                 return { tree, node };
             }
             
@@ -268,7 +220,7 @@ namespace AVL {
             }
 
             //  MODIFIERS
-            Node* InsertRecursive (char key, Node* node) {
+            Node* InsertRecursive (T key, Node* node) {
                 if (!node) {
                     node = new Node { key };
                     node->id_ = nodes_.size ();
@@ -286,7 +238,7 @@ namespace AVL {
             Node* RemoveMin (Node* node) {
                 return (node->left_ ? node->left_ = RemoveMin (node->left_), Balance (node) : node->right_);
             }
-            Node* ExtractRecursive (char key, Node* node) {
+            Node* ExtractRecursive (T key, Node* node) {
                 if (!node) { return nullptr; }
                 if (key < node->key_) {
                     node->left_ = ExtractRecursive (key, node->left_);
@@ -380,5 +332,81 @@ namespace AVL {
                     MakeDotRecursive (outfile, node->right_);
                 }
             }
+
+        public:
+            //  ITERATOR
+            class Iterator final {
+                private:
+                    //  DATA
+                    Node* node_ = nullptr;
+                    Tree* tree_ = nullptr;
+                    
+                    //  SERVICE CTOR
+                    Iterator (Tree* tree, Node* node):
+                        tree_ (tree),
+                        node_ (node)
+                        {}
+
+                    template <typename U>
+                    friend typename Tree <U>::Iterator MakeIterator (Tree <U>* tree, typename Tree <U>::Node* node);
+                    
+                    
+                public:
+                    //  CTOR
+                    Iterator ():
+                        node_ (nullptr),
+                        tree_ (nullptr)
+                        {}
+
+                    //  CAST OPERATORS
+                    explicit operator Node* () { return node_; }
+                    explicit operator bool () { return node_; }
+
+                    //  OPERATORS
+                    const T operator * () const { return node_->key_; }
+                    const T* operator -> () const { return node_; }
+                    Iterator operator ++ () {
+                        Node* cur = tree_->head_;
+                        Node* ans = nullptr;
+                        while (cur) {
+                            if (cur->key_ > node_->key_) {
+                                ans = cur;
+                                cur = cur->left_;
+                            }
+                            else {
+                                cur = cur->right_;
+                            }
+                        }
+                        node_ = ans;
+                        return { tree_, ans };
+                    }
+                    Iterator operator ++ (int) {
+                        Iterator ans = *this;
+                        ++(*this);
+                        return ans;
+                    }
+                    Iterator operator -- () {
+                        Node* cur = tree_->head_;
+                        Node* ans = nullptr;
+                        while (cur) {
+                            if (cur->key_ > node_->key_) {
+                                cur = cur->left_;
+                            }
+                            else {
+                                ans = cur;
+                                cur = cur->right_;
+                            }
+                        }
+                        node_ = ans;
+                        return { tree_, ans };
+                    }
+                    Iterator operator -- (int) {
+                        Iterator ans = *this;
+                        --(*this);
+                        return ans;
+                    }
+                    bool operator == (const Iterator& rhs) { return node_ == rhs.node_; }
+                    bool operator != (const Iterator& rhs) { return !(*this == rhs); }
+            };
     };
 }
