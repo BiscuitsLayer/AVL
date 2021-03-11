@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <iterator>
 
 namespace AVL {
     template <typename T>
@@ -39,13 +40,13 @@ namespace AVL {
                         nodes_[i] = new Node { rhs.nodes_[i]->key_ };
                         nodes_[i]->id_ = i;
                     }
-                    head_ = nodes_[rhs.head_->id_];
+                    head_ = rhs.nodes_[rhs.head_->id_];
                     for (auto&& node : nodes_) {
-                        if (nodes_[node->id_]->left_) {
-                            node->left_ = nodes_[node->left_->id_];
+                        if (rhs.nodes_[node->id_]->left_) {
+                            node->left_ = rhs.nodes_[node->id_]->left_;
                         }
-                        if (nodes_[node->id_]->right_) {
-                            node->right_ = nodes_[node->right_->id_];
+                        if (rhs.nodes_[node->id_]->right_) {
+                            node->right_ = rhs.nodes_[node->id_]->right_;
                         }
                     }
                 }
@@ -208,10 +209,7 @@ namespace AVL {
             Node* head_ = nullptr;
 
             //  ITERATOR
-            template <typename U>
-            friend typename Tree <U>::Iterator MakeIterator (Tree <U>* tree, typename Tree <U>::Node* node) {
-                return { tree, node };
-            }
+            friend Iterator MakeIterator (Tree* tree, Node* node);
             
             //  SHALLOW SWAP
             void ShallowSwap (Tree& rhs) {
@@ -230,7 +228,8 @@ namespace AVL {
                 if (key < node->key_) {
                     node->left_ = InsertRecursive (key, node->left_);
                 }
-                else { // key >= node->key_
+                else
+                if (key > node->key_) {
                     node->right_ = InsertRecursive (key, node->right_);
                 }
                 return Balance (node);
@@ -347,11 +346,19 @@ namespace AVL {
                         node_ (node)
                         {}
 
-                    template <typename U>
-                    friend typename Tree <U>::Iterator MakeIterator (Tree <U>* tree, typename Tree <U>::Node* node);
+                    friend Iterator MakeIterator (Tree* tree, Node* node) {
+                        return { tree, node };
+                    }
                     
                     
                 public:
+                    //  REQUIRED TYPES
+                    using iterator_category = std::bidirectional_iterator_tag;
+                    using value_type = T;
+                    using difference_type = std::ptrdiff_t;
+                    using pointer = T*;
+                    using reference = T&;
+
                     //  CTOR
                     Iterator ():
                         node_ (nullptr),
@@ -405,8 +412,8 @@ namespace AVL {
                         --(*this);
                         return ans;
                     }
-                    bool operator == (const Iterator& rhs) { return node_ == rhs.node_; }
-                    bool operator != (const Iterator& rhs) { return !(*this == rhs); }
+                    friend bool operator == (Iterator lhs, Iterator rhs) { return lhs.node_ == rhs.node_; }
+                    friend bool operator != (Iterator lhs, Iterator rhs) { return !(lhs == rhs); }
             };
     };
 }

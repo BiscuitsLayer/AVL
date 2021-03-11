@@ -1,8 +1,6 @@
 #include <fstream>
-#include <unistd.h>
 
 #include "Tree/Tree.hpp"
-#include <set>
 
 void MakeDot (AVL::Tree <char> tree) {
 	std::ofstream treeDot  { "Images/Tree.dot", std::ios::trunc };
@@ -25,7 +23,6 @@ void CtorsTest () {
 	AVL::Tree <char> tree2 {};
 	tree2 = tree1;
 	tree2 = AddedX (tree1);
-	MakeDot (tree1);
 }
 
 int main () {
@@ -37,14 +34,15 @@ int main () {
 	tree.Insert ('d');
 	tree.Insert ('c');
 	tree.Insert ('x');
+	tree.Insert ('c');
+	tree.Insert ('q');
 
-
-	std::ofstream treeDot  { "Images/Tree.dot", std::ios::trunc };
-	if (!treeDot.is_open ()) {
-		std::cerr << "Error opening dot file!" << std::endl;
+	for (auto&& elem : tree) {
+		std::cout << elem << ' ';
 	}
-	tree.MakeDot (&treeDot);
+	std::cout << std::endl;
+
 	CtorsTest ();
-	std::cout << *tree.LowerBound ('a') << std::endl;
-	std::cout << *tree.UpperBound ('a') << std::endl;
+	MakeDot (tree);
+	return 0;
 }
