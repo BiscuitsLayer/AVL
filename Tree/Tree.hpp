@@ -66,7 +66,7 @@ namespace AVL {
                 if (key < node->key_) {
                     node->left_ = InsertRecursive (key, node->left_);
                 }
-                else {
+                else { // key >= node->key_
                     node->right_ = InsertRecursive (key, node->right_);
                 }
                 return Balance (node);
@@ -132,9 +132,69 @@ namespace AVL {
         public:
             class Iterator final {
                 private:
-
+                    Node* node_ = nullptr;
+                    Tree* tree_ = nullptr;
+                    
+                    //  SERVICE CTOR
+                    Iterator (Tree* tree, Node* node):
+                        tree_ (tree),
+                        node_ (node)
+                        {}
+                    friend Iterator MakeIterator (Tree* tree, Node* node);
+                    
                 public:
+                    //  CTOR
+                    Iterator ():
+                        node_ (nullptr),
+                        tree_ (nullptr)
+                        {}
 
+                    //  OPERATORS
+                    const char operator * () const { return node_->key_; }
+                    template <typename T>
+                    const T* operator -> () const { return node_; }
+                    Iterator operator ++ () {
+                        Node* cur = tree_->head_;
+                        Node* ans = nullptr;
+                        while (cur) {
+                            if (cur->key_ > node_->key_) {
+                                ans = cur;
+                                cur = cur->left_;
+                            }
+                            else {
+                                cur = cur->right_;
+                            }
+                        }
+                        node_ = ans;
+                        return { tree_, ans };
+                    }
+                    Iterator operator ++ (int) {
+                        Iterator ans = *this;
+                        ++(*this);
+                        return ans;
+                    }
+                    Iterator operator -- () {
+                        Node* cur = tree_->head_;
+                        Node* ans = nullptr;
+                        while (cur) {
+                            if (cur->key_ > node_->key_) {
+                                cur = cur->left_;
+                            }
+                            else {
+                                ans = cur;
+                                cur = cur->right_;
+                            }
+                        }
+                        node_ = ans;
+                        return { tree_, ans };
+                    }
+                    Iterator operator -- (int) {
+                        Iterator ans = *this;
+                        --(*this);
+                        return ans;
+                    }
+                    bool operator == (const Iterator& rhs) { return node_ == rhs.node_; }
+                    bool operator != (const Iterator& rhs) { return !(*this == rhs); }
             };
 
             //  CTORS
@@ -209,18 +269,73 @@ namespace AVL {
                 }
                 return result;
             }
-            void Extract (char key) {
 
+            Node* RemoveMin (Node* node) {
+                return (node->left_ ? node->left_ = RemoveMin (node->left_), Balance (node) : node->right_);
             }
 
+            Node* ExtractRecursive (char key, Node* node) {
+                if (!node) { return nullptr; }
+                if (key < node->key_) {
+                    node->left_ = ExtractRecursive (key, node->left_);
+                }
+                else 
+                if (key > node->key_) {
+                    node->right_ = ExtractRecursive (key, node->right_);
+                }
+                else { // key == node->key_
+                    Node* lhs = node->left_;
+		            Node* rhs = node->right_;
+                    nodes_[node->id_] = nullptr;
+		            delete node;
+		            if (!rhs) {
+                        return lhs;
+                    }
+
+		            Node* min = rhs;
+                    while (min->left_) {
+                        min = min->left_;
+                    }
+                    Node* temp = min->right_;
+                    if (rhs->left_) {
+                        //? removemin убрать бы
+                        rhs->left_ = RemoveMin (rhs->left_);
+                        min->right_ = Balance (rhs);
+                    }
+                    else { 
+                        min->right_ = rhs->right_;
+                    };
+		            min->left_ = rhs;
+		            return Balance (min);
+                }
+                return Balance (node);
+            }
+
+            Node* Extract (char key) {
+                Node* result = ExtractRecursive (key, head_);
+            }
+            //?
+
+            //  ITERATORS
+            friend Iterator MakeIterator (Tree* tree, Node* node) {
+                return { tree, node };
+            }
+            Iterator begin () {
+                Node* ansNode = head_;
+                if (ansNode) {
+                    while (ansNode->left_) {
+                        ansNode = ansNode->left_;
+                    }
+                }
+                return MakeIterator (this, ansNode);
+            }
+            Iterator end () {
+                return MakeIterator (this, nullptr);
+            }
 
             //  CAPACITY
-            size_t Size () {
-                return nodes_.size ();
-            }
-            bool Empty () {
-                return nodes_.size ();
-            }
+            size_t Size () { return nodes_.size (); }
+            bool Empty () { return nodes_.size (); }
 
             //  DOT IMAGE
             void MakeDot (std::ofstream* outfile) {

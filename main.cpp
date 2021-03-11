@@ -1,4 +1,5 @@
 #include <fstream>
+#include <unistd.h>
 
 #include "Tree/Tree.hpp"
 #include <set>
@@ -35,11 +36,16 @@ int main () {
 	tree.Insert ('d');
 	tree.Insert ('c');
 
+	//tree.Extract ('b');
+
 	std::ofstream treeDot  { "Images/Tree.dot", std::ios::trunc };
 	if (!treeDot.is_open ()) {
 		std::cerr << "Error opening dot file!" << std::endl;
 	}
-	
+	tree.MakeDot (&treeDot);
 	CtorsTest ();
-	return 0;
+	for (auto&& elem : tree) {
+		std::cout << elem << ' ';
+	}	
+
 }
