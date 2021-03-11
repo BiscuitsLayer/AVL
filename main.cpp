@@ -36,7 +36,6 @@ int main () {
 	tree.Insert ('d');
 	tree.Insert ('c');
 
-	//tree.Extract ('b');
 
 	std::ofstream treeDot  { "Images/Tree.dot", std::ios::trunc };
 	if (!treeDot.is_open ()) {
@@ -46,6 +45,13 @@ int main () {
 	CtorsTest ();
 	for (auto&& elem : tree) {
 		std::cout << elem << ' ';
-	}	
-
+	}
+	std::cout << std::endl;
+	auto it = tree.Find ('b');
+	tree.Extract (it);
+	it = tree.Find ('a');
+	for (auto it2 = it; it2 != tree.end (); ++it2) {
+		std::cout << *it2 << ' ';
+	}
+	std::cout << std::endl;
 }
