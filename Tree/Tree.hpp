@@ -15,7 +15,7 @@ namespace AVL {
                 nodes_ ({}),
                 head_ (nullptr)
                 {}  
-            Tree (std::vector <T>& data):
+            Tree (const std::vector <T>& data):
                 nodes_ ({}),
                 head_ (nullptr)
                 {
@@ -98,7 +98,7 @@ namespace AVL {
             }
 
             //  ITERATORS
-            Iterator begin () {
+            Iterator begin () const {
                 Node* ansNode = head_;
                 if (ansNode) {
                     while (ansNode->left_) {
@@ -110,7 +110,7 @@ namespace AVL {
             Iterator end () {
                 return MakeIterator (this, nullptr);
             }
-            Iterator LowerBound (const T& key) {
+            Iterator LowerBound (const T& key) const {
                 Node* cur = head_;
                 Node* prev = nullptr;
                 while (cur) {
@@ -129,7 +129,7 @@ namespace AVL {
                 Iterator ans = MakeIterator (this, prev);
                 return (prev->key_ > key ? ans : ++ans);
             }
-            Iterator UpperBound (const T& key) {
+            Iterator UpperBound (const T& key) const {
                 Iterator ans = LowerBound (key);
                 if (ans && *ans == key) {
                     ++ans;
@@ -138,11 +138,11 @@ namespace AVL {
             }
 
             //  CAPACITY
-            size_t Size () { return nodes_.size (); }
-            bool Empty () { return nodes_.empty (); }
+            size_t Size () const { return nodes_.size (); }
+            bool Empty () const { return nodes_.empty (); }
 
             //  LOOKUP
-            Iterator Find (const T& key) {
+            Iterator Find (const T& key) const {
                 Node* cur = head_;
                 while (cur) {
                     if (key < cur->key_) {
@@ -159,7 +159,7 @@ namespace AVL {
             }
 
             //  DOT IMAGE
-            void MakeDot (std::ofstream* outfile) {
+            void MakeDot (std::ofstream* outfile) const {
                 *outfile << "digraph G {" << std::endl << "fontsize = 50" << std::endl;
                 if (head_) {
                     *outfile << head_->id_ << "[label = \"" << head_->key_ << "\"]" << std::endl;
@@ -209,7 +209,7 @@ namespace AVL {
             Node* head_ = nullptr;
 
             //  ITERATOR
-            friend Iterator MakeIterator (Tree* tree, Node* node);
+            friend Iterator MakeIterator (const Tree* tree, Node* node);
             
             //  SHALLOW SWAP
             void ShallowSwap (Tree& rhs) {
@@ -318,7 +318,7 @@ namespace AVL {
             }
 
             //  DOT IMAGE
-            void MakeDotRecursive (std::ofstream* outfile, Node* node) {
+            void MakeDotRecursive (std::ofstream* outfile, Node* node) const {
                 if (!node) { return; }
                 if (node->left_) {                    
                     *outfile << node->left_->id_ << "[label = \"" << node->left_->key_ << "\"]" << std::endl;
@@ -341,12 +341,12 @@ namespace AVL {
                     Tree* tree_ = nullptr;
                     
                     //  SERVICE CTOR
-                    Iterator (Tree* tree, Node* node):
+                    Iterator (const Tree* tree, Node* node):
                         tree_ (tree),
                         node_ (node)
                         {}
 
-                    friend Iterator MakeIterator (Tree* tree, Node* node) {
+                    friend Iterator MakeIterator (const Tree* tree, Node* node) {
                         return { tree, node };
                     }
                     

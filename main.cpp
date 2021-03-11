@@ -1,8 +1,10 @@
+//	SYSTEM
 #include <fstream>
 
+//	TREE
 #include "Tree/Tree.hpp"
 
-void MakeDot (AVL::Tree <char> tree) {
+void MakeDot (const AVL::Tree <int>& tree) {
 	std::ofstream treeDot  { "Images/Tree.dot", std::ios::trunc };
 	if (!treeDot.is_open ()) {
 		std::cerr << "Error opening dot file!" << std::endl;
@@ -10,39 +12,9 @@ void MakeDot (AVL::Tree <char> tree) {
 	tree.MakeDot (&treeDot);
 }
 
-AVL::Tree <char> AddedX (AVL::Tree <char> tree) {
-	tree.Insert ('x');
-	return tree;
-}
+int main (int argc, char** argv) {
+	AVL::Tree <int> tree {};
 
-void CtorsTest () {
-	AVL::Tree <char> tree1 {};
-	tree1.Insert ('x');
-	tree1.Insert ('z');
-	tree1.Insert ('y');
-	AVL::Tree <char> tree2 {};
-	tree2 = tree1;
-	tree2 = AddedX (tree1);
-}
-
-int main () {
-	AVL::Tree <char> tree {};
-
-	tree.Insert ('b');
-	tree.Insert ('a');
-	tree.Insert ('q');
-	tree.Insert ('d');
-	tree.Insert ('c');
-	tree.Insert ('x');
-	tree.Insert ('c');
-	tree.Insert ('q');
-
-	for (auto&& elem : tree) {
-		std::cout << elem << ' ';
-	}
-	std::cout << std::endl;
-
-	CtorsTest ();
 	MakeDot (tree);
 	return 0;
 }
