@@ -8,6 +8,8 @@
 //	GOOGLE TEST
 #include <gtest/gtest.h>
 
+//#define NO_RANDOM_FILL
+
 using StdTree = std::set <int>;
 using StdIterator = std::set <int>::iterator;
 
@@ -16,9 +18,9 @@ using MyIterator = AVL::Tree <int>::Iterator;
 
 class AVLTest : public ::testing::Test {
 	public:
-        MyTree mySet_ {};
         StdTree stdSet_ {};
-
+        MyTree mySet_ {};
+        
         //  RANDOM FILL
         void RandomFill (int elementsCount) {
             std::vector <int> vec {};
@@ -56,7 +58,11 @@ class AVLTest : public ::testing::Test {
                 std::vector <std::pair <int, int>> requests {};
 
                 for (int i = 0; i < requestsCount; ++i) {
-                    requests.emplace_back (rand () % elementsCount, rand () % elementsCount);
+                    auto pair = std::make_pair (rand () % elementsCount, rand () % elementsCount);
+                    if (pair.first > pair.second) {
+                        std::swap (pair.first, pair.second);
+                    }
+                    requests.push_back (pair);
                 }
             #else
                 std::cin >> elementsCount;
@@ -83,8 +89,6 @@ class AVLTest : public ::testing::Test {
                     requests.emplace_back (first, second);
                 }
             #endif
-
-            
             
             //  PREPARING VECTORS FOR ANSWERS
             std::vector <int> stdAns {};
@@ -99,7 +103,7 @@ class AVLTest : public ::testing::Test {
                 stdAns.push_back (ans);
             }
             auto stdEnd = std::chrono::steady_clock::now ();
-
+            
             //  TESTING AVL TREE
             auto myStart = std::chrono::steady_clock::now ();
             for (auto&& request : requests) {
@@ -143,7 +147,7 @@ class LowerBound : public AVLTest {
 TEST_F (Equal, Test) { DoTest (1000); }
 TEST_F (UpperBound, Test) { DoTest (1000); }
 TEST_F (LowerBound, Test) { DoTest (1000); }
-TEST_F (AVLTest, SpeedTest) { SpeedTest (1000); }
+TEST_F (AVLTest, SpeedTest) { SpeedTest (500); }
 
 int main (int argc, char** argv) {
 	::testing::InitGoogleTest(&argc, argv);

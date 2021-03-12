@@ -1,5 +1,6 @@
 #pragma once
 
+//  SYSTEM
 #include <iostream>
 #include <vector>
 #include <iterator>
@@ -98,7 +99,7 @@ namespace AVL {
             }
 
             //  ITERATORS
-            Iterator begin () const {
+            Iterator begin () {
                 Node* ansNode = head_;
                 if (ansNode) {
                     while (ansNode->left_) {
@@ -110,7 +111,7 @@ namespace AVL {
             Iterator end () {
                 return MakeIterator (this, nullptr);
             }
-            Iterator LowerBound (const T& key) const {
+            Iterator LowerBound (const T& key) {
                 Node* cur = head_;
                 Node* prev = nullptr;
                 while (cur) {
@@ -129,7 +130,7 @@ namespace AVL {
                 Iterator ans = MakeIterator (this, prev);
                 return (prev->key_ > key ? ans : ++ans);
             }
-            Iterator UpperBound (const T& key) const {
+            Iterator UpperBound (const T& key) {
                 Iterator ans = LowerBound (key);
                 if (ans && *ans == key) {
                     ++ans;
@@ -209,7 +210,7 @@ namespace AVL {
             Node* head_ = nullptr;
 
             //  ITERATOR
-            friend Iterator MakeIterator (const Tree* tree, Node* node);
+            friend Iterator MakeIterator (Tree* tree, Node* node);
             
             //  SHALLOW SWAP
             void ShallowSwap (Tree& rhs) {
@@ -341,15 +342,14 @@ namespace AVL {
                     Tree* tree_ = nullptr;
                     
                     //  SERVICE CTOR
-                    Iterator (const Tree* tree, Node* node):
+                    Iterator (Tree* tree, Node* node):
                         tree_ (tree),
                         node_ (node)
                         {}
 
-                    friend Iterator MakeIterator (const Tree* tree, Node* node) {
+                    friend Iterator MakeIterator (Tree* tree, Node* node) {
                         return { tree, node };
                     }
-                    
                     
                 public:
                     //  REQUIRED TYPES
