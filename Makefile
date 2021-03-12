@@ -3,7 +3,7 @@ LDFLAGS = -std=c++2a
 CXXFLAGS = -MMD -O3 -ggdb3 -std=c++2a
 Test = 2
 
-all: main run
+all: main run 
 
 main: main.o
 
