@@ -1,8 +1,8 @@
 #pragma once
 
 //  SYSTEM
-#include <iostream>
 #include <vector>
+#include <stack>
 #include <iterator>
 
 namespace AVL {
@@ -44,6 +44,9 @@ namespace AVL {
                         tempNodes[i]->id_ = i;
                     }
                     for (auto&& node : tempNodes) {
+                        if (rhs.nodes_[node->id_]->parent_) {
+                            node->parent_ = nodes_[rhs.nodes_[node->id_]->parent_->id_];
+                        }
                         if (rhs.nodes_[node->id_]->left_) {
                             node->left_ = nodes_[rhs.nodes_[node->id_]->left_->id_];
                         }
@@ -52,7 +55,6 @@ namespace AVL {
                         }
                     }
                     Node* tempHead = nodes_[rhs.head_->id_];
-
                     std::swap (tempNodes, nodes_);
                     std::swap (tempHead, head_);
                 }
@@ -165,7 +167,7 @@ namespace AVL {
             }
 
             //  DOT IMAGE
-            void MakeDot (std::ofstream* outfile) const {
+            void dump (std::ofstream* outfile) const {
                 *outfile << "digraph G {" << std::endl << "fontsize = 50" << std::endl;
                 if (head_) {
                     *outfile << head_->id_ << "[label = \"" << head_->key_ << "\"]" << std::endl;
@@ -177,6 +179,7 @@ namespace AVL {
             struct Node final {
                 public:
                     //  DATA
+                    Node* parent_ = nullptr;
                     T key_ {};
                     int height_ = 1;
                     int balanceFactor_ = 0;
@@ -186,6 +189,7 @@ namespace AVL {
 
                     //  CTOR
                     Node (T key):
+                        parent_ (),
                         key_ (key),
                         height_ (),
                         balanceFactor_ (),
@@ -233,15 +237,21 @@ namespace AVL {
                 }
                 if (key < node->key_) {
                     node->left_ = InsertRecursive (key, node->left_);
+                    node->left_->parent_ = node;
                 }
                 else
                 if (key > node->key_) {
                     node->right_ = InsertRecursive (key, node->right_);
+                    node->right_->parent_ = node;
                 }
                 return Balance (node);
             }
             Node* RemoveMin (Node* node) {
-                return (node->left_ ? node->left_ = RemoveMin (node->left_), Balance (node) : node->right_);
+                if (node->left_) {
+                    node->left_ = RemoveMin (node->left_);
+                    return Balance (node);
+                }
+                return node->right_;
             }
             Node* ExtractRecursive (T key, Node* node) {
                 if (!node) { return nullptr; }
@@ -284,22 +294,40 @@ namespace AVL {
             //  ROTATIONS
             Node* RotateLeft (Node* node) {
                 Node* temp = node->right_;
+                temp->parent_ = node->parent_;
+
                 node->right_ = temp->left_;
+                if (temp->left_) {
+                    temp->left_->parent_ = node;
+                }
+
                 temp->left_ = node;
+                node->parent_ = temp;
+
                 if (node == head_) {
                     head_ = temp;
                 }
+
                 node->Update ();
                 temp->Update ();
                 return temp;
             }
             Node* RotateRight (Node* node) {
                 Node* temp = node->left_;
+                temp->parent_ = node->parent_;
+
                 node->left_ = temp->right_;
+                if (temp->right_) {
+                    temp->right_->parent_ = node;
+                }
+
                 temp->right_ = node;
+                node->parent_ = temp;
+
                 if (node == head_) {
                     head_ = temp;
                 }
+
                 node->Update ();
                 temp->Update ();
                 return temp;
@@ -308,13 +336,13 @@ namespace AVL {
             //  BALANCING
             Node* Balance (Node* node) {
                 node->Update ();
-                if (node->balanceFactor_ == 2) {
+                if (node->balanceFactor_ > 1) {
                     if (node->right_ && node->right_->balanceFactor_ < 0) {
                         node->right_ = RotateRight (node->right_);
                         return RotateLeft (node);
                     }
                 }
-                if (node->balanceFactor_ == -2) {
+                if (node->balanceFactor_ < -1) {
                     if (node->left_ && node->left_->balanceFactor_ > 0) {
                         node->left_ = RotateLeft (node->left_);
                         return RotateRight (node);
@@ -344,13 +372,35 @@ namespace AVL {
                 private:
                     //  DATA
                     Node* node_ = nullptr;
+                    std::stack <Node*> previousStack_ {};
                     Tree* tree_ = nullptr;
                     
-                    //  SERVICE CTOR
+                    //  SERVICE STUFF
                     Iterator (Tree* tree, Node* node):
                         tree_ (tree),
                         node_ (node)
-                        {}
+                        {
+                            Node* cur = tree_->head_;
+                            if (node) {
+                                while (cur) {
+                                    if (node->key_ < cur->key_) {
+                                        previousStack_.push (cur);
+                                        cur = cur->left_;
+                                    }
+                                    else if (node->key_ > cur->key_) {
+                                        previousStack_.push (cur);
+                                        cur = cur->right_;
+                                    }
+                                    else { // node->key_ == cur->key_
+                                        previousStack_.push (cur);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    void PushAll (Node* node) {
+                        for (; node != nullptr; previousStack_.push (node), node = node->left_);
+                    }
 
                     friend Iterator MakeIterator (Tree* tree, Node* node) {
                         return { tree, node };
@@ -378,6 +428,7 @@ namespace AVL {
                     const T operator * () const { return node_->key_; }
                     const T* operator -> () const { return node_; }
                     Iterator operator ++ () {
+                        /*
                         Node* cur = tree_->head_;
                         Node* ans = nullptr;
                         while (cur) {
@@ -390,6 +441,13 @@ namespace AVL {
                             }
                         }
                         node_ = ans;
+                        return { tree_, ans };
+                        */
+                        Node* ans = previousStack_.top ();
+                        previousStack_.pop ();
+                        if (ans) {
+                            PushAll (ans->right_);
+                        }
                         return { tree_, ans };
                     }
                     Iterator operator ++ (int) {

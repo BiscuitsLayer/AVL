@@ -138,9 +138,9 @@ class UpperBound : public AVLTest {
 class LowerBound : public AVLTest { 
     void TestFunc (StdIterator stdIt, MyIterator myIt) override {
         ASSERT_EQ (*stdIt, *myIt);
-        auto stdUpper = std::lower_bound (mySet_.begin (), mySet_.end (), *myIt);
-        auto myUpper = mySet_.upper_bound (*myIt);
-        ASSERT_EQ (stdUpper, myUpper);
+        auto stdLower = std::lower_bound (mySet_.begin (), mySet_.end (), *myIt);
+        auto myLower = mySet_.lower_bound (*myIt);
+        ASSERT_EQ (stdLower, myLower);
     } 
 };
 

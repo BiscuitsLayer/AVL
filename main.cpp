@@ -1,4 +1,5 @@
 //	SYSTEM
+#include <iostream>
 #include <fstream>
 #include <set>
 #include <chrono>
@@ -17,7 +18,7 @@ void MakeDot (const AVL::Tree <int>& tree) {
 	if (!treeDot.is_open ()) {
 		std::cerr << "Error opening dot file!" << std::endl;
 	}
-	tree.MakeDot (&treeDot);
+	tree.dump (&treeDot);
 }
 
 int main (int argc, char** argv) {
@@ -92,9 +93,16 @@ int main (int argc, char** argv) {
 	MakeDot (mySet_);
     */
     std::vector <int> vec { 0, 0, 0, 9, 9, 999, 1000, 500, 100, 750, 250, 6 };
-    AVL::Tree <int>* tree1 = new AVL::Tree <int> { vec };
-    AVL::Tree <int> tree2 = std::move (*tree1);
-    delete tree1;
-    MakeDot (tree2);
+    AVL::Tree <int> tree1 { vec };
+    
+    for (auto it = tree1.begin (),
+    it2 = tree1.end ();
+    it != it2;
+    ++it) {
+        std::cout << *it << ' ';
+    }
+    std::cout << std::endl;
+    
+    MakeDot (tree1);
 	return 0;
 }
