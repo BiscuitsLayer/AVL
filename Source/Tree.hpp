@@ -21,13 +21,13 @@ namespace AVL {
                 head_ (nullptr)
                 {
                     for (auto&& item : data) {
-                        Insert (item);
+                        insert (item);
                     }
                 }
 
             //  DTOR
             ~Tree () {
-                for (auto&& node : nodes_) {
+                for (auto* node : nodes_) {
                     delete node;
                 }
             }
@@ -36,20 +36,25 @@ namespace AVL {
             Tree (const Tree& rhs):
                 nodes_ (rhs.nodes_.size ()),
                 head_ (nullptr)
-                {
+                {   
+                    std::vector <Node*> tempNodes {};
+                    tempNodes.reserve (rhs.nodes_.size ());
                     for (int i = 0; i < rhs.nodes_.size (); ++i) {
-                        nodes_[i] = new Node { rhs.nodes_[i]->key_ };
-                        nodes_[i]->id_ = i;
+                        tempNodes.emplace_back (new Node { rhs.nodes_[i]->key_ });
+                        tempNodes[i]->id_ = i;
                     }
-                    head_ = rhs.nodes_[rhs.head_->id_];
-                    for (auto&& node : nodes_) {
+                    for (auto&& node : tempNodes) {
                         if (rhs.nodes_[node->id_]->left_) {
-                            node->left_ = rhs.nodes_[node->id_]->left_;
+                            node->left_ = nodes_[rhs.nodes_[node->id_]->left_->id_];
                         }
                         if (rhs.nodes_[node->id_]->right_) {
-                            node->right_ = rhs.nodes_[node->id_]->right_;
+                            node->right_ = nodes_[rhs.nodes_[node->id_]->right_->id_];
                         }
                     }
+                    Node* tempHead = nodes_[rhs.head_->id_];
+
+                    std::swap (tempNodes, nodes_);
+                    std::swap (tempHead, head_);
                 }
             Tree& operator = (Tree& rhs) {
                 if (this != &rhs) {
@@ -71,27 +76,27 @@ namespace AVL {
             }
 
             //  MODIFIERS
-            void Clear () { 
+            void clear () { 
                 head_ = nullptr;
                 for (auto&& node : nodes_) {
                     delete node;
                 }
                 nodes_.clear ();
             }
-            Iterator Insert (const T& key) {
+            Iterator insert (const T& key) {
                 Node* result = InsertRecursive (key, head_);
                 if (nodes_.size () == 1) {
                     head_ = result;
                 }
                 return MakeIterator (this, result);
             }
-            void Extract (const T& key) {
+            void extract (const T& key) {
                 Node* result = ExtractRecursive (key, head_);
                 if (!head_) {
                     head_ = result;
                 }
             }
-            void Extract (Iterator it) {
+            void extract (Iterator it) {
                 Node* result = ExtractRecursive (*it, static_cast <Node*> (it));
                 if (!head_) {
                     head_ = result;
@@ -111,7 +116,7 @@ namespace AVL {
             Iterator end () {
                 return MakeIterator (this, nullptr);
             }
-            Iterator LowerBound (const T& key) {
+            Iterator lower_bound (const T& key) {
                 Node* cur = head_;
                 Node* prev = nullptr;
                 while (cur) {
@@ -130,8 +135,8 @@ namespace AVL {
                 Iterator ans = MakeIterator (this, prev);
                 return (prev->key_ > key ? ans : ++ans);
             }
-            Iterator UpperBound (const T& key) {
-                Iterator ans = LowerBound (key);
+            Iterator upper_bound (const T& key) {
+                Iterator ans = lower_bound (key);
                 if (ans && *ans == key) {
                     ++ans;
                 }
@@ -139,11 +144,11 @@ namespace AVL {
             }
 
             //  CAPACITY
-            size_t Size () const { return nodes_.size (); }
-            bool Empty () const { return nodes_.empty (); }
+            size_t size () const { return nodes_.size (); }
+            bool empty () const { return nodes_.empty (); }
 
             //  LOOKUP
-            Iterator Find (const T& key) const {
+            Iterator find (const T& key) const {
                 Node* cur = head_;
                 while (cur) {
                     if (key < cur->key_) {
@@ -182,11 +187,11 @@ namespace AVL {
                     //  CTOR
                     Node (T key):
                         key_ (key),
-                        height_ (1),
-                        balanceFactor_ (0),
-                        id_ (-1),
-                        left_ (nullptr),
-                        right_ (nullptr)
+                        height_ (),
+                        balanceFactor_ (),
+                        id_ (),
+                        left_ (),
+                        right_ ()
                         {}
 
                     //  COPY

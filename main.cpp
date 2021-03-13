@@ -4,7 +4,7 @@
 #include <chrono>
 
 //	TREE
-#include "Tree/Tree.hpp"
+#include "Source/Tree.hpp"
 
 using StdTree = std::set <int>;
 using StdIterator = std::set <int>::iterator;
@@ -21,16 +21,23 @@ void MakeDot (const AVL::Tree <int>& tree) {
 }
 
 int main (int argc, char** argv) {
+    /*
+    std::ifstream inputStream { argv[1] };
+	if (!inputStream) {
+		std::cerr << "Error opening file!" << std::endl;
+		return 0;
+	}
+
 	StdTree stdSet_ {};
     MyTree mySet_ {};
 
 	int elementsCount = 0;
-	std::cin >> elementsCount;
+	inputStream >> elementsCount;
     std::vector <int> vec {};
     vec.reserve (elementsCount);
     int temp = 0;
     for (int i = 0; i < elementsCount; ++i) {
-        std::cin >> temp;
+        inputStream >> temp;
         vec.push_back (temp);
 	}
     
@@ -39,11 +46,11 @@ int main (int argc, char** argv) {
 	
     //  PREPARING REQUESTS
     int requestsCount = 0;
-    std::cin >> requestsCount;
+    inputStream >> requestsCount;
     std::vector <std::pair <int, int>> requests {};
     int first = 0, second = 0;
     for (int i = 0; i < requestsCount; ++i) {
-        std::cin >> first >> second;
+        inputStream >> first >> second;
         requests.emplace_back (first, second);
 	}
         
@@ -64,7 +71,7 @@ int main (int argc, char** argv) {
     //  TESTING AVL TREE
     auto myStart = std::chrono::steady_clock::now ();
     for (auto&& request : requests) {
-        auto ans = std::distance (mySet_.LowerBound (request.first), mySet_.UpperBound (request.second));
+        auto ans = std::distance (mySet_.lower_bound (request.first), mySet_.upper_bound (request.second));
         myAns.push_back (ans);
     }
     auto myEnd = std::chrono::steady_clock::now ();
@@ -83,5 +90,11 @@ int main (int argc, char** argv) {
     std::cerr << "AVL::Tree time = " << (myEnd - myStart).count () << std::endl;
 
 	MakeDot (mySet_);
+    */
+    std::vector <int> vec { 0, 0, 0, 9, 9, 999, 1000, 500, 100, 750, 250, 6 };
+    AVL::Tree <int>* tree1 = new AVL::Tree <int> { vec };
+    AVL::Tree <int> tree2 = std::move (*tree1);
+    delete tree1;
+    MakeDot (tree2);
 	return 0;
 }

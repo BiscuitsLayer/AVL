@@ -1,7 +1,7 @@
 CC = g++
 LDFLAGS = -std=c++2a
-CXXFLAGS = -MMD -O3 -ggdb3 -std=c++2a
-Test = 2
+CXXFLAGS = -MMD -ggdb3 -std=c++2a
+Test = 3
 
 all: main run 
 
@@ -16,7 +16,10 @@ image:
 	dot -Tpng $(CURDIR)/Images/Tree.dot -o $(CURDIR)/Images/Tree.png
 
 run:
-	./main < Test/$(Test).in
+	./main Test/$(Test).in
+
+clean:
+	rm -r *.d *.o
 
 .PHONY = all clean
 

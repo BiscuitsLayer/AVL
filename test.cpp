@@ -3,7 +3,7 @@
 #include <chrono>
 
 //  TREE
-#include "Tree/Tree.hpp"
+#include "Source/Tree.hpp"
 
 //	GOOGLE TEST
 #include <gtest/gtest.h>
@@ -107,7 +107,7 @@ class AVLTest : public ::testing::Test {
             //  TESTING AVL TREE
             auto myStart = std::chrono::steady_clock::now ();
             for (auto&& request : requests) {
-                auto ans = std::distance (mySet_.LowerBound (request.first), mySet_.UpperBound (request.second));
+                auto ans = std::distance (mySet_.lower_bound (request.first), mySet_.upper_bound (request.second));
                 myAns.push_back (ans);
             }
             auto myEnd = std::chrono::steady_clock::now ();
@@ -130,7 +130,7 @@ class UpperBound : public AVLTest {
     void TestFunc (StdIterator stdIt, MyIterator myIt) override {
         ASSERT_EQ (*stdIt, *myIt);
         auto stdUpper = std::upper_bound (mySet_.begin (), mySet_.end (), *myIt);
-        auto myUpper = mySet_.UpperBound (*myIt);
+        auto myUpper = mySet_.upper_bound (*myIt);
         ASSERT_EQ (stdUpper, myUpper);
     } 
 };
@@ -139,7 +139,7 @@ class LowerBound : public AVLTest {
     void TestFunc (StdIterator stdIt, MyIterator myIt) override {
         ASSERT_EQ (*stdIt, *myIt);
         auto stdUpper = std::lower_bound (mySet_.begin (), mySet_.end (), *myIt);
-        auto myUpper = mySet_.LowerBound (*myIt);
+        auto myUpper = mySet_.upper_bound (*myIt);
         ASSERT_EQ (stdUpper, myUpper);
     } 
 };
