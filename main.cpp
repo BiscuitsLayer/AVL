@@ -99,9 +99,13 @@ int main (int argc, char** argv) {
     it2 = tree1.end ();
     it != it2;
     ++it) {
-        std::cout << *it << ' ';
+        std::cout << *it << '\n';
+        if (*it % 2 == 0) {
+            --it;
+            std::cout << *it << '\n';
+            ++it;
+        }
     }
-    std::cout << std::endl;
     
     MakeDot (tree1);
 	return 0;

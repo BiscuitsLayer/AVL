@@ -107,13 +107,13 @@ namespace AVL {
 
             //  ITERATORS
             Iterator begin () {
-                Node* ansNode = head_;
-                if (ansNode) {
-                    while (ansNode->left_) {
-                        ansNode = ansNode->left_;
+                Node* ans = head_;
+                if (ans) {
+                    while (ans->left_) {
+                        ans = ans->left_;
                     }
                 }
-                return MakeIterator (this, ansNode);
+                return MakeIterator (this, ans);
             }
             Iterator end () {
                 return MakeIterator (this, nullptr);
@@ -396,12 +396,11 @@ namespace AVL {
                                         break;
                                     }
                                 }
+                                previousStack_.pop ();
                             }
                         }
-                    void PushAll (Node* node) {
-                        for (; node != nullptr; previousStack_.push (node), node = node->left_);
-                    }
 
+                    //  FRIEND
                     friend Iterator MakeIterator (Tree* tree, Node* node) {
                         return { tree, node };
                     }
@@ -428,27 +427,17 @@ namespace AVL {
                     const T operator * () const { return node_->key_; }
                     const T* operator -> () const { return node_; }
                     Iterator operator ++ () {
-                        /*
-                        Node* cur = tree_->head_;
-                        Node* ans = nullptr;
-                        while (cur) {
-                            if (cur->key_ > node_->key_) {
-                                ans = cur;
-                                cur = cur->left_;
-                            }
-                            else {
-                                cur = cur->right_;
+                        if (!previousStack_.empty ()) {
+                            node_ = previousStack_.top ();
+                            previousStack_.pop ();
+                            for (Node* cur = node_->right_; cur != nullptr; cur = cur->left_) {
+                                previousStack_.push (cur);
                             }
                         }
-                        node_ = ans;
-                        return { tree_, ans };
-                        */
-                        Node* ans = previousStack_.top ();
-                        previousStack_.pop ();
-                        if (ans) {
-                            PushAll (ans->right_);
+                        else {
+                            node_ = nullptr;
                         }
-                        return { tree_, ans };
+                        return *this;
                     }
                     Iterator operator ++ (int) {
                         Iterator ans = *this;
@@ -468,7 +457,7 @@ namespace AVL {
                             }
                         }
                         node_ = ans;
-                        return { tree_, ans };
+                        return *this;
                     }
                     Iterator operator -- (int) {
                         Iterator ans = *this;
