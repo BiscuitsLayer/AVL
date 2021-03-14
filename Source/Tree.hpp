@@ -99,7 +99,7 @@ namespace AVL {
                 }
             }
             void extract (Iterator it) {
-                Node* result = ExtractRecursive (*it, static_cast <Node*> (it));
+                Node* result = ExtractRecursive (*it, it);
                 if (!head_) {
                     head_ = result;
                 }
@@ -219,7 +219,7 @@ namespace AVL {
             Node* head_ = nullptr;
 
             //  ITERATOR
-            friend Iterator MakeIterator (Tree* tree, Node* node);
+            friend Iterator MakeIterator (const Tree* tree, Node* node);
             
             //  SHALLOW SWAP
             void ShallowSwap (Tree& rhs) {
@@ -376,8 +376,8 @@ namespace AVL {
                     Tree* tree_ = nullptr;
                     
                     //  SERVICE STUFF
-                    Iterator (Tree* tree, Node* node):
-                        tree_ (tree),
+                    Iterator (const Tree* tree, Node* node):
+                        tree_ (const_cast <Tree*> (tree)),
                         node_ (node)
                         {
                             Node* cur = tree_->head_;
@@ -388,29 +388,31 @@ namespace AVL {
                                         cur = cur->left_;
                                     }
                                     else if (node->key_ > cur->key_) {
-                                        previousStack_.push (cur);
                                         cur = cur->right_;
                                     }
                                     else { // node->key_ == cur->key_
-                                        previousStack_.push (cur);
+                                        cur = cur->right_;
+                                        while (cur) {
+                                            previousStack_.push (cur);
+                                            cur = cur->left_;
+                                        }
                                         break;
                                     }
                                 }
-                                previousStack_.pop ();
                             }
                         }
 
                     //  FRIEND
-                    friend Iterator MakeIterator (Tree* tree, Node* node) {
+                    friend Iterator MakeIterator (const Tree* tree, Node* node) {
                         return { tree, node };
                     }
                     
                 public:
                     //  REQUIRED TYPES
-                    using iterator_category = std::bidirectional_iterator_tag;
+                    using iterator_category = std::forward_iterator_tag;
                     using value_type = T;
                     using difference_type = std::ptrdiff_t;
-                    using pointer = T*;
+                    using pointer = Node*;
                     using reference = T&;
 
                     //  CTOR
@@ -420,13 +422,13 @@ namespace AVL {
                         {}
 
                     //  CAST OPERATORS
-                    explicit operator Node* () { return node_; }
                     explicit operator bool () { return node_; }
 
                     //  OPERATORS
                     const T operator * () const { return node_->key_; }
                     const T* operator -> () const { return node_; }
                     Iterator operator ++ () {
+                        // now complexity is amortized O (1)
                         if (!previousStack_.empty ()) {
                             node_ = previousStack_.top ();
                             previousStack_.pop ();
@@ -442,26 +444,6 @@ namespace AVL {
                     Iterator operator ++ (int) {
                         Iterator ans = *this;
                         ++(*this);
-                        return ans;
-                    }
-                    Iterator operator -- () {
-                        Node* cur = tree_->head_;
-                        Node* ans = nullptr;
-                        while (cur) {
-                            if (cur->key_ > node_->key_) {
-                                cur = cur->left_;
-                            }
-                            else {
-                                ans = cur;
-                                cur = cur->right_;
-                            }
-                        }
-                        node_ = ans;
-                        return *this;
-                    }
-                    Iterator operator -- (int) {
-                        Iterator ans = *this;
-                        --(*this);
                         return ans;
                     }
                     friend bool operator == (Iterator lhs, Iterator rhs) { return lhs.node_ == rhs.node_; }

@@ -145,9 +145,9 @@ class LowerBound : public AVLTest {
 };
 
 TEST_F (Equal, Test) { DoTest (1000); }
-//TEST_F (UpperBound, Test) { DoTest (1000); }
+TEST_F (UpperBound, Test) { DoTest (1000); }
 TEST_F (LowerBound, Test) { DoTest (1000); }
-//TEST_F (AVLTest, SpeedTest) { SpeedTest (10); }
+TEST_F (AVLTest, SpeedTest) { SpeedTest (10); }
 
 int main (int argc, char** argv) {
 	::testing::InitGoogleTest(&argc, argv);

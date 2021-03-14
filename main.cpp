@@ -22,7 +22,6 @@ void MakeDot (const AVL::Tree <int>& tree) {
 }
 
 int main (int argc, char** argv) {
-    /*
     std::ifstream inputStream { argv[1] };
 	if (!inputStream) {
 		std::cerr << "Error opening file!" << std::endl;
@@ -91,22 +90,5 @@ int main (int argc, char** argv) {
     std::cerr << "AVL::Tree time = " << (myEnd - myStart).count () << std::endl;
 
 	MakeDot (mySet_);
-    */
-    std::vector <int> vec { 0, 0, 0, 9, 9, 999, 1000, 500, 100, 750, 250, 6 };
-    AVL::Tree <int> tree1 { vec };
-    
-    for (auto it = tree1.begin (),
-    it2 = tree1.end ();
-    it != it2;
-    ++it) {
-        std::cout << *it << '\n';
-        if (*it % 2 == 0) {
-            --it;
-            std::cout << *it << '\n';
-            ++it;
-        }
-    }
-    
-    MakeDot (tree1);
 	return 0;
 }
