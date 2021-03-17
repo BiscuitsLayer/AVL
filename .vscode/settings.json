@@ -52,5 +52,6 @@
         "iomanip": "cpp",
         "chrono": "cpp",
         "ratio": "cpp"
-    }
+    },
+    "C_Cpp.default.compilerPath": "/home/biscuits/.vscode/extensions/bartmanabyss.amiga-debug-1.0.0\\bin\\opt\\bin\\m68k-amiga-elf-gcc.exe"
 }

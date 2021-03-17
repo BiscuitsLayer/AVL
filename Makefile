@@ -1,6 +1,6 @@
 CC = g++
 LDFLAGS = -std=c++2a
-CXXFLAGS = -MMD -ggdb3 -std=c++2a
+CXXFLAGS = -MMD -O3 -ggdb3 -std=c++2a
 Test = 3
 
 all: main run 
@@ -19,7 +19,7 @@ run:
 	./main Test/$(Test).in
 
 clean:
-	rm -r *.d *.o
+	rm -r *.d *.o main test
 
 .PHONY = all clean
 

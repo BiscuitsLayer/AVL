@@ -98,7 +98,7 @@ namespace AVL {
                     head_ = result;
                 }
             }
-            void extract (Iterator it) {
+            void extract (const Iterator& it) {
                 Node* result = ExtractRecursive (*it, it);
                 if (!head_) {
                     head_ = result;
@@ -371,15 +371,16 @@ namespace AVL {
             class Iterator final {
                 private:
                     //  DATA
+                    Tree* tree_ = nullptr;
                     Node* node_ = nullptr;
                     std::stack <Node*> previousStack_ {};
-                    Tree* tree_ = nullptr;
                     
                     //  SERVICE STUFF
                     Iterator (const Tree* tree, Node* node):
                         tree_ (const_cast <Tree*> (tree)),
                         node_ (node)
                         {
+                            std::cerr << "Ctor iter" << std::endl;
                             Node* cur = tree_->head_;
                             if (node) {
                                 while (cur) {
@@ -401,7 +402,16 @@ namespace AVL {
                                 }
                             }
                         }
-
+                        
+                    explicit Iterator (const Tree* tree, Node* node, std::stack <Node*>&& previousStack):
+                        tree_ (const_cast <Tree*> (tree)),
+                        node_ (node)
+                        {
+                            std::cerr << "Move ctor iter" << std::endl;
+                            std::swap (previousStack, previousStack_);
+                            std::cerr << "Move ctor iter finished" << std::endl;
+                        }
+                        
                     //  FRIEND
                     friend Iterator MakeIterator (const Tree* tree, Node* node) {
                         return { tree, node };
@@ -425,9 +435,15 @@ namespace AVL {
                     explicit operator bool () { return node_; }
 
                     //  OPERATORS
-                    const T operator * () const { return node_->key_; }
+                    const T operator * () const { 
+                        if (node_) {
+                            return node_->key_; 
+                        }
+                        return static_cast <T> (-666);
+                    }
                     const T* operator -> () const { return node_; }
                     Iterator operator ++ () {
+                        std::cerr << "operator ++" << std::endl;
                         // now complexity is amortized O (1)
                         if (!previousStack_.empty ()) {
                             node_ = previousStack_.top ();
@@ -439,6 +455,9 @@ namespace AVL {
                         else {
                             node_ = nullptr;
                         }
+                        //auto retVal = Iterator { tree_, node_, std::move (previousStack_) };
+                        //std::cerr << "operator ++ retVal done: " << *retVal << std::endl;
+                        //return retVal;
                         return *this;
                     }
                     Iterator operator ++ (int) {
@@ -446,8 +465,8 @@ namespace AVL {
                         ++(*this);
                         return ans;
                     }
-                    friend bool operator == (Iterator lhs, Iterator rhs) { return lhs.node_ == rhs.node_; }
-                    friend bool operator != (Iterator lhs, Iterator rhs) { return !(lhs == rhs); }
+                    friend bool operator == (const Iterator& lhs, const Iterator& rhs) { return lhs.node_ == rhs.node_; }
+                    friend bool operator != (const Iterator& lhs, const Iterator& rhs) { return !(lhs == rhs); }
             };
     };
 }
