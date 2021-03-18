@@ -449,9 +449,7 @@ namespace AVL {
                         else {
                             node_ = nullptr;
                         }
-                        auto temp { previousStack_ };
-                        //return *this;
-                        return MakeIterator (tree_, node_, std::move (temp));
+                        return *this;
                     }
                     Iterator operator ++ (int) {
                         Iterator ans = *this;

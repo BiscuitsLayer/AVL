@@ -54,7 +54,7 @@ class AVLTest : public ::testing::Test {
             #ifndef NO_RANDOM_FILL
                 RandomFill (elementsCount);
 
-                int requestsCount = rand () % elementsCount;
+                int requestsCount = rand () % 10;
                 std::vector <std::pair <int, int>> requests {};
 
                 for (int i = 0; i < requestsCount; ++i) {
@@ -113,7 +113,7 @@ class AVLTest : public ::testing::Test {
             auto myEnd = std::chrono::steady_clock::now ();
 
             //  CHECK RESULTS
-            //ASSERT_EQ (stdAns, myAns);
+            ASSERT_EQ (stdAns, myAns);
             
             std::cerr << "std::set time  = " << (stdEnd - stdStart).count () << std::endl;
             std::cerr << "AVL::Tree time = " << (myEnd - myStart).count () << std::endl;
@@ -147,7 +147,7 @@ class LowerBound : public AVLTest {
 TEST_F (Equal, Test) { DoTest (1000); }
 TEST_F (UpperBound, Test) { DoTest (1000); }
 TEST_F (LowerBound, Test) { DoTest (1000); }
-TEST_F (AVLTest, SpeedTest) { SpeedTest (1000); }
+TEST_F (AVLTest, SpeedTest) { SpeedTest (5000000); }
 
 int main (int argc, char** argv) {
 	::testing::InitGoogleTest(&argc, argv);

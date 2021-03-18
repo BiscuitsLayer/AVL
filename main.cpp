@@ -82,7 +82,6 @@ int main (int argc, char** argv) {
 #endif
     
     //  PREPARING VECTORS FOR ANSWERS
-    int ans = 0;
     std::vector <int> stdAns {};
     stdAns.reserve (requestsCount);
     std::vector <int> myAns {};
@@ -91,9 +90,7 @@ int main (int argc, char** argv) {
     //  TESTING STD SET
     auto stdStart = std::chrono::steady_clock::now ();
     for (auto&& request : requests) {
-        auto lower = stdSet_.lower_bound (request.first);
-        auto upper = stdSet_.upper_bound (request.second);
-        for (ans = 0; lower != upper; ++ans, ++lower);
+        auto ans = std::distance (stdSet_.lower_bound (request.first), stdSet_.upper_bound (request.second));
         stdAns.push_back (ans);
     }
     auto stdEnd = std::chrono::steady_clock::now ();
@@ -101,9 +98,7 @@ int main (int argc, char** argv) {
     //  TESTING AVL TREE
     auto myStart = std::chrono::steady_clock::now ();
     for (auto&& request : requests) {
-        auto lower = mySet_.lower_bound (request.first);
-        auto upper = mySet_.upper_bound (request.second);
-        for (ans = 0; lower != upper; ++ans, ++lower);
+        auto ans = std::distance (mySet_.lower_bound (request.first), mySet_.upper_bound (request.second));
         myAns.push_back (ans);
     }
     auto myEnd = std::chrono::steady_clock::now ();
@@ -112,7 +107,7 @@ int main (int argc, char** argv) {
     for (int i = 0; i < requestsCount; ++i) {
 		if (stdAns[i] != myAns[i]) {
 			std::cerr << "Error! Answers don't match!" << std::endl;
-			//return 0;
+			return 0;
 		}
 		std::cout << (i == 0 ? "" : " ") << myAns[i];
 	}
