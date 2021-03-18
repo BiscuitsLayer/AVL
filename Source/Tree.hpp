@@ -1,9 +1,12 @@
 #pragma once
 
 //  SYSTEM
+#include <iostream>
 #include <vector>
 #include <stack>
 #include <iterator>
+
+const int POISON = -666;
 
 namespace AVL {
     template <typename T>
@@ -85,12 +88,11 @@ namespace AVL {
                 }
                 nodes_.clear ();
             }
-            Iterator insert (const T& key) {
+            void insert (const T& key) {
                 Node* result = InsertRecursive (key, head_);
                 if (nodes_.size () == 1) {
                     head_ = result;
                 }
-                return MakeIterator (this, result);
             }
             void extract (const T& key) {
                 Node* result = ExtractRecursive (key, head_);
@@ -108,33 +110,44 @@ namespace AVL {
             //  ITERATORS
             Iterator begin () {
                 Node* ans = head_;
+                std::stack <Node*> previousStack {};
                 if (ans) {
                     while (ans->left_) {
+                        previousStack.push (ans);
                         ans = ans->left_;
                     }
                 }
-                return MakeIterator (this, ans);
+                return MakeIterator (this, ans, std::move (previousStack));
             }
             Iterator end () {
-                return MakeIterator (this, nullptr);
+                std::stack <Node*> previousStack {};
+                return MakeIterator (this, nullptr, std::move (previousStack));
             }
             Iterator lower_bound (const T& key) {
                 Node* cur = head_;
                 Node* prev = nullptr;
+                bool lastMoveLeft = false;
+                std::stack <Node*> previousStack {};
                 while (cur) {
                     if (key < cur->key_) {
                         prev = cur;
+                        previousStack.push (cur);
                         cur = cur->left_;
+                        lastMoveLeft = true;
                     }
                     else if (key > cur->key_) {
                         prev = cur;
                         cur = cur->right_;
+                        lastMoveLeft = false;
                     }
                     else { // key == cur->key_
-                        return MakeIterator (this, cur);
+                        return MakeIterator (this, cur, std::move (previousStack));
                     }
                 }
-                Iterator ans = MakeIterator (this, prev);
+                if (!previousStack.empty () && lastMoveLeft) {
+                    previousStack.pop ();
+                }
+                Iterator ans = MakeIterator (this, prev, std::move (previousStack));
                 return (prev->key_ > key ? ans : ++ans);
             }
             Iterator upper_bound (const T& key) {
@@ -152,8 +165,10 @@ namespace AVL {
             //  LOOKUP
             Iterator find (const T& key) const {
                 Node* cur = head_;
+                std::stack <Node*> previousStack {};
                 while (cur) {
                     if (key < cur->key_) {
+                        previousStack.push (cur);
                         cur = cur->left_;
                     }
                     else if (key > cur->key_) {
@@ -163,7 +178,7 @@ namespace AVL {
                         break;
                     }
                 }
-                return MakeIterator (this, cur);
+                return MakeIterator (this, cur, std::move (previousStack));
             }
 
             //  DOT IMAGE
@@ -219,7 +234,7 @@ namespace AVL {
             Node* head_ = nullptr;
 
             //  ITERATOR
-            friend Iterator MakeIterator (const Tree* tree, Node* node);
+            friend Iterator MakeIterator (const Tree* tree, Node* node, std::stack <Node*>&& previousStack);
             
             //  SHALLOW SWAP
             void ShallowSwap (Tree& rhs) {
@@ -339,14 +354,14 @@ namespace AVL {
                 if (node->balanceFactor_ > 1) {
                     if (node->right_ && node->right_->balanceFactor_ < 0) {
                         node->right_ = RotateRight (node->right_);
-                        return RotateLeft (node);
                     }
+                    return RotateLeft (node);
                 }
                 if (node->balanceFactor_ < -1) {
                     if (node->left_ && node->left_->balanceFactor_ > 0) {
                         node->left_ = RotateLeft (node->left_);
-                        return RotateRight (node);
                     }
+                    return RotateRight (node);
                 }
                 return node;
             }
@@ -375,46 +390,25 @@ namespace AVL {
                     Node* node_ = nullptr;
                     std::stack <Node*> previousStack_ {};
                     
-                    //  SERVICE STUFF
-                    Iterator (const Tree* tree, Node* node):
+                    //  CTOR  
+                    Iterator (const Tree* tree, Node* node, std::stack <Node*>&& previousStack):
                         tree_ (const_cast <Tree*> (tree)),
                         node_ (node)
                         {
-                            std::cerr << "Ctor iter" << std::endl;
-                            Node* cur = tree_->head_;
-                            if (node) {
-                                while (cur) {
-                                    if (node->key_ < cur->key_) {
-                                        previousStack_.push (cur);
-                                        cur = cur->left_;
-                                    }
-                                    else if (node->key_ > cur->key_) {
-                                        cur = cur->right_;
-                                    }
-                                    else { // node->key_ == cur->key_
-                                        cur = cur->right_;
-                                        while (cur) {
-                                            previousStack_.push (cur);
-                                            cur = cur->left_;
-                                        }
-                                        break;
-                                    }
-                                }
+                            std::swap (previousStack, previousStack_);
+                            Node* cur = node;
+                            if (cur) {
+                                cur = cur->right_;
+                            }
+                            while (cur) {
+                                previousStack_.push (cur);
+                                cur = cur->left_;
                             }
                         }
                         
-                    explicit Iterator (const Tree* tree, Node* node, std::stack <Node*>&& previousStack):
-                        tree_ (const_cast <Tree*> (tree)),
-                        node_ (node)
-                        {
-                            std::cerr << "Move ctor iter" << std::endl;
-                            std::swap (previousStack, previousStack_);
-                            std::cerr << "Move ctor iter finished" << std::endl;
-                        }
-                        
                     //  FRIEND
-                    friend Iterator MakeIterator (const Tree* tree, Node* node) {
-                        return { tree, node };
+                    friend Iterator MakeIterator (const Tree* tree, Node* node, std::stack <Node*>&& previousStack) {
+                        return Iterator { tree, node, std::move (previousStack) };
                     }
                     
                 public:
@@ -439,11 +433,11 @@ namespace AVL {
                         if (node_) {
                             return node_->key_; 
                         }
-                        return static_cast <T> (-666);
+                        std::cerr << "Error! Invalid node!" << std::endl;
+                        return static_cast <T> (POISON);
                     }
                     const T* operator -> () const { return node_; }
                     Iterator operator ++ () {
-                        std::cerr << "operator ++" << std::endl;
                         // now complexity is amortized O (1)
                         if (!previousStack_.empty ()) {
                             node_ = previousStack_.top ();
@@ -455,10 +449,9 @@ namespace AVL {
                         else {
                             node_ = nullptr;
                         }
-                        //auto retVal = Iterator { tree_, node_, std::move (previousStack_) };
-                        //std::cerr << "operator ++ retVal done: " << *retVal << std::endl;
-                        //return retVal;
-                        return *this;
+                        auto temp { previousStack_ };
+                        //return *this;
+                        return MakeIterator (tree_, node_, std::move (temp));
                     }
                     Iterator operator ++ (int) {
                         Iterator ans = *this;
