@@ -204,13 +204,13 @@ namespace AVL {
 
                     //  CTOR
                     Node (T key):
-                        parent_ (),
+                        parent_ (nullptr),
                         key_ (key),
-                        height_ (),
-                        balanceFactor_ (),
-                        id_ (),
-                        left_ (),
-                        right_ ()
+                        height_ (1),
+                        balanceFactor_ (0),
+                        id_ (-1),
+                        left_ (nullptr),
+                        right_ (nullptr)
                         {}
 
                     //  COPY
